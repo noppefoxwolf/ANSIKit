@@ -13,11 +13,17 @@ Displaying these text files in a app (iOS or OSX) is desirable, but first we nee
 
 ## The Problem
 
-This is HARD.
+There are many ways in which a blob of text can be formatted. One of these is by using ANSI escape codes to change the format of the text. A typical use of these codes is in a terminal window whereby the output is progressively rendered to the screen.
 
-By HARD I mean, really, really, hard. I could use profanities but that would be pointless.
+This isn't as easy when it comes to displaying the final output from a log file that contains this formatting.
 
-You get how hard this stuff is.
+What I need help with is the following areas of the code.
+
+1. How can I reliably identify the range over which an escape code would apply
+1. How can I identify the escape codes amongst the string being parsed
+1. How can I avoid consuming all the cpu and ram on a device.
+
+The current use of this framework is in an iOS app that displays the output from a saved log file. This log file is the result of running tests against the code and is ANSI formatted. 
 
 ## How to help out
 
