@@ -1,4 +1,5 @@
 # ANSIKit
+[![Build status](https://badge.buildkite.com/7651debde69eef1691403ae8cae48008e2e39de01dd0edc6e0.svg)](https://buildkite.com/mattdelves/ansikit)
 
 ## A Call for help.
 
