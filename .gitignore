@@ -1,0 +1,8 @@
+*/timeline.xctimeline
+**/*/xcuserdata
+**/*/xcshareddata
+DerivedData
+logs/*
+Mortimer.ipa
+Mortimer.app.dSYM.zip
+Package.itmsp/*
