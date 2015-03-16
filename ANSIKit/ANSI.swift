@@ -238,6 +238,8 @@ func escapeCodesForString(escapedString: String, inout cleanString: String?) -> 
   
   var searchRange = NSMakeRange(0, aStringLength)
   var thisEscapeSequenceRange: NSRange
+  var thisCoveredLength: Int = 0
+  var searchStart: Int = 0
   
   do
   {
@@ -245,9 +247,9 @@ func escapeCodesForString(escapedString: String, inout cleanString: String?) -> 
     
     if (thisEscapeSequenceRange.location != NSNotFound) {
       var codes = [Int]()
-      (codes, thisEscapeSequenceRange) = rangeAndCodesForSequence(thisEscapeSequenceRange, aString)
+      codes = codesForSequence(&thisEscapeSequenceRange, aString)
       
-      let thisCoveredLength = thisEscapeSequenceRange.location - searchRange.location
+      thisCoveredLength = thisEscapeSequenceRange.location - searchRange.location
       coveredLength += thisCoveredLength
       
       for codeToAdd: Int in codes as [Int] {
@@ -258,7 +260,7 @@ func escapeCodesForString(escapedString: String, inout cleanString: String?) -> 
         cleanString = cleanString?.stringByAppendingString(aString.substringWithRange(NSMakeRange(searchRange.location, thisCoveredLength)))
       }
       
-      let searchStart = NSMaxRange(thisEscapeSequenceRange)
+      searchStart = NSMaxRange(thisEscapeSequenceRange)
       searchRange = NSMakeRange(searchStart, aStringLength - searchStart)
     }
   } while(thisEscapeSequenceRange.location != NSNotFound)
@@ -270,35 +272,28 @@ func escapeCodesForString(escapedString: String, inout cleanString: String?) -> 
   return formatCodes
 }
 
-func rangeAndCodesForSequence(theRange: NSRange, string: NSString) -> ([Int], NSRange) {
+func codesForSequence(inout sequenceRange: NSRange, string: NSString) -> [Int] {
   var codes = [Int]()
   var code = 0
   var lengthAddition = 1
   var thisIndex: Int
-  var sequenceRange: NSRange = theRange
-  let stringLength = string.length
   
   while(true)
   {
     thisIndex = (NSMaxRange(sequenceRange) + lengthAddition - 1)
     
-    if (thisIndex >= stringLength) {
+    if (thisIndex >= string.length) {
       break
     }
     
     var c: unichar = string.characterAtIndex(thisIndex)
     
-    // '0' is 48
-    // '9' is 57
     if ((48 <= c) && (c <= 57))
     {
       let digit: Int = c - 48
       code = (code == 48) ? digit : code * 10 + digit
     }
     
-    // ASCII decimal 109 is the SGR (Select Graphic Rendition) final byte
-    // ("m"). this means that the code value we've just read specifies formatting
-    // for the output; exactly what we're interested in.
     if (c == 109)
     {
       codes.append(code)
@@ -316,5 +311,5 @@ func rangeAndCodesForSequence(theRange: NSRange, string: NSString) -> ([Int], NS
   
   sequenceRange.length += lengthAddition
 
-  return (codes, sequenceRange)
+  return codes
 }
