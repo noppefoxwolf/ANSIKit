@@ -93,20 +93,21 @@ func attributesForString(helper: AnsiHelper, aString: String, inout aCleanString
   var cleanString: String? = ""
   let formatCodes: [[String: AnyObject]] = escapeCodesForString(aString, &cleanString)
   let foundCodes = countElements(formatCodes)
+  var startIndex = 0
+  var range: NSRange
   
   for (index, thisCodeDict) in enumerate(formatCodes) {
     var thisCode = thisCodeDict[AttributeKeys.code] as Int
     var code = SGRCode(rawValue: thisCode)
     
-    if let thisAttributeName = attributeNameForCode(code!) {
-      if let thisAttributeValue: AnyObject = attributeValueForCode(code!, helper) {
-        let startIndex = index + 1
-        let codesSubset: [[String: AnyObject]] = Array(formatCodes[startIndex..<foundCodes])
-        let range = rangeOfString(cleanString!, thisCodeDict, codesSubset)
+    if let attributeName = attributeNameForCode(code!) {
+      if let attributeValue: AnyObject = attributeValueForCode(code!, helper) {
+        startIndex = index + 1
+        range = rangeOfString(cleanString!, thisCodeDict, Array(formatCodes[startIndex..<foundCodes]))
         attrsAndRanges.append([
           AttributeKeys.range: range,
-          AttributeKeys.name: thisAttributeName,
-          AttributeKeys.value: thisAttributeValue
+          AttributeKeys.name: attributeName,
+          AttributeKeys.value: attributeValue
           ])
       }
     }
@@ -237,20 +238,20 @@ func escapeCodesForString(escapedString: String, inout cleanString: String?) -> 
   var coveredLength = 0
   
   var searchRange = NSMakeRange(0, aStringLength)
-  var thisEscapeSequenceRange: NSRange
+  var sequenceRange: NSRange
   var thisCoveredLength: Int = 0
   var searchStart: Int = 0
   
   do
   {
-    thisEscapeSequenceRange = aString.rangeOfString(EscapeCharacters.CSI, options: NSStringCompareOptions.allZeros, range: searchRange)
+    sequenceRange = aString.rangeOfString(EscapeCharacters.CSI, options: NSStringCompareOptions.LiteralSearch, range: searchRange)
     
-    if (thisEscapeSequenceRange.location != NSNotFound) {
+    if (sequenceRange.location != NSNotFound) {
       
-      thisCoveredLength = thisEscapeSequenceRange.location - searchRange.location
+      thisCoveredLength = sequenceRange.location - searchRange.location
       coveredLength += thisCoveredLength
 
-      formatCodes += codesForSequence(&thisEscapeSequenceRange, aString).map { code in
+      formatCodes += codesForSequence(&sequenceRange, aString).map { code in
         [AttributeKeys.code: code, AttributeKeys.location: coveredLength]
       }
       
@@ -258,10 +259,10 @@ func escapeCodesForString(escapedString: String, inout cleanString: String?) -> 
         cleanString = cleanString?.stringByAppendingString(aString.substringWithRange(NSMakeRange(searchRange.location, thisCoveredLength)))
       }
       
-      searchStart = NSMaxRange(thisEscapeSequenceRange)
+      searchStart = NSMaxRange(sequenceRange)
       searchRange = NSMakeRange(searchStart, aStringLength - searchStart)
     }
-  } while(thisEscapeSequenceRange.location != NSNotFound)
+  } while(sequenceRange.location != NSNotFound)
   
   if (searchRange.length > 0) {
     cleanString = cleanString?.stringByAppendingString(aString.substringWithRange(searchRange))
@@ -284,7 +285,7 @@ func codesForSequence(inout sequenceRange: NSRange, string: NSString) -> [Int] {
       break
     }
     
-    var c: unichar = string.characterAtIndex(thisIndex)
+    let c: unichar = string.characterAtIndex(thisIndex)
     
     if ((48 <= c) && (c <= 57))
     {
