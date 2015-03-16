@@ -246,14 +246,12 @@ func escapeCodesForString(escapedString: String, inout cleanString: String?) -> 
     thisEscapeSequenceRange = aString.rangeOfString(EscapeCharacters.CSI, options: NSStringCompareOptions.allZeros, range: searchRange)
     
     if (thisEscapeSequenceRange.location != NSNotFound) {
-      var codes = [Int]()
-      codes = codesForSequence(&thisEscapeSequenceRange, aString)
       
       thisCoveredLength = thisEscapeSequenceRange.location - searchRange.location
       coveredLength += thisCoveredLength
-      
-      for codeToAdd: Int in codes as [Int] {
-        formatCodes.append([AttributeKeys.code: codeToAdd, AttributeKeys.location: coveredLength])
+
+      formatCodes += codesForSequence(&thisEscapeSequenceRange, aString).map { code in
+        [AttributeKeys.code: code, AttributeKeys.location: coveredLength]
       }
       
       if (thisCoveredLength > 0) {
