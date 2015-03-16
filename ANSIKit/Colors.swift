@@ -52,6 +52,7 @@ public struct Colors {
     static let BrightCyan = Colors.Fg.BrightCyan
     static let BrightWhite = UIColor.whiteColor()
   }
+  
 }
 
 func SGRCodeForColor(aColor: UIColor?, isForegroundColor: Bool) -> SGRCode
@@ -127,116 +128,4 @@ func SGRCodeForColor(aColor: UIColor?, isForegroundColor: Bool) -> SGRCode
   }
   
   return SGRCode.NoneOrInvalid
-}
-
-func closestSGRCodeForColor(color: UIColor?, isForeground: Bool) -> SGRCode
-{
-  if (color == nil) {
-    return SGRCode.NoneOrInvalid
-  }
-  
-  var closestColorSGRCode = SGRCodeForColor(color, isForeground)
-  if (closestColorSGRCode != SGRCode.NoneOrInvalid) {
-    return closestColorSGRCode
-  }
-  
-  var givenColorHSB = getHSBFromColor(color!)
-  
-  var closestColorHueDiff: CGFloat = CGFloat.max
-  var closestColorSaturationDiff: CGFloat = CGFloat.max
-  var closestColorBrightnessDiff: CGFloat = CGFloat.max
-  
-  // (background SGR codes are +10 from foreground ones:)
-  let SGRCodeShift = isForeground ? 0:10
-  let ansiFgColorCodes = [
-    SGRCode.FgBlack.rawValue + SGRCodeShift,
-    SGRCode.FgRed.rawValue + SGRCodeShift,
-    SGRCode.FgGreen.rawValue + SGRCodeShift,
-    SGRCode.FgYellow.rawValue + SGRCodeShift,
-    SGRCode.FgBlue.rawValue + SGRCodeShift,
-    SGRCode.FgMagenta.rawValue + SGRCodeShift,
-    SGRCode.FgCyan.rawValue + SGRCodeShift,
-    SGRCode.FgWhite.rawValue + SGRCodeShift,
-    SGRCode.FgBrightBlack.rawValue + SGRCodeShift,
-    SGRCode.FgBrightRed.rawValue + SGRCodeShift,
-    SGRCode.FgBrightGreen.rawValue + SGRCodeShift,
-    SGRCode.FgBrightYellow.rawValue + SGRCodeShift,
-    SGRCode.FgBrightBlue.rawValue + SGRCodeShift,
-    SGRCode.FgBrightMagenta.rawValue + SGRCodeShift,
-    SGRCode.FgBrightCyan.rawValue + SGRCodeShift,
-    SGRCode.FgBrightWhite.rawValue + SGRCodeShift
-  ]
-  
-  for thisSGRCode in ansiFgColorCodes
-  {
-    let code = SGRCode(rawValue: thisSGRCode)!
-    
-    var thisColor = code.color
-    
-    var thisColorHSB = getHSBFromColor(thisColor);
-    
-    var hueDiff = fabs(givenColorHSB.hue - thisColorHSB.hue);
-    var saturationDiff = fabs(givenColorHSB.saturation - thisColorHSB.saturation);
-    var brightnessDiff = fabs(givenColorHSB.brightness - thisColorHSB.brightness);
-    
-    if (hueDiff != closestColorHueDiff) {
-      if (hueDiff > closestColorHueDiff) {
-        continue
-      }
-      
-      closestColorSGRCode = code
-      closestColorHueDiff = hueDiff
-      closestColorSaturationDiff = saturationDiff
-      closestColorBrightnessDiff = brightnessDiff
-      continue
-    }
-    
-    if (saturationDiff != closestColorSaturationDiff) {
-      if (saturationDiff > closestColorSaturationDiff) {
-        continue
-      }
-      
-      closestColorSGRCode = code
-      closestColorHueDiff = hueDiff
-      closestColorSaturationDiff = saturationDiff
-      closestColorBrightnessDiff = brightnessDiff
-      continue
-    }
-    
-    if (brightnessDiff != closestColorBrightnessDiff) {
-      if (brightnessDiff > closestColorBrightnessDiff) {
-        continue
-      }
-      
-      closestColorSGRCode = code
-      closestColorHueDiff = hueDiff
-      closestColorSaturationDiff = saturationDiff
-      closestColorBrightnessDiff = brightnessDiff
-      continue
-    }
-    
-    
-    let colorDistinctivenessOrder = [
-      SGRCode.FgRed.rawValue + SGRCodeShift,
-      SGRCode.FgMagenta.rawValue + SGRCodeShift,
-      SGRCode.FgBlue.rawValue + SGRCodeShift,
-      SGRCode.FgGreen.rawValue + SGRCodeShift,
-      SGRCode.FgCyan.rawValue + SGRCodeShift,
-      SGRCode.FgYellow.rawValue + SGRCodeShift
-    ]
-    
-    for distinctiveColor in colorDistinctivenessOrder {
-      if (distinctiveColor == closestColorSGRCode.rawValue) {
-        break
-      } else if (distinctiveColor == thisSGRCode) {
-        closestColorSGRCode = code
-        closestColorHueDiff = hueDiff
-        closestColorSaturationDiff = saturationDiff
-        closestColorBrightnessDiff = brightnessDiff
-      }
-    }
-    
-  }
-  
-  return closestColorSGRCode
 }
