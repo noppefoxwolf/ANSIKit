@@ -145,11 +145,11 @@ func attributeNameForCode(code: SGRCode) -> String? {
   if codeIsFgColor(code) {
     return NSForegroundColorAttributeName
   } else if codeIsBgColor(code) {
-    return NSBackgroundColorAttributeName;
+    return NSBackgroundColorAttributeName
   } else if codeIsIntensity(code) {
-    return NSFontAttributeName;
+    return NSFontAttributeName
   } else if codeIsUnderline(code) {
-    return NSUnderlineStyleAttributeName;
+    return NSUnderlineStyleAttributeName
   }
   return nil
 }
