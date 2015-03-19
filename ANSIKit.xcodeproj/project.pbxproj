@@ -14,6 +14,8 @@
 		C96873BD1A9475D50022366B /* ANSI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C96873BC1A9475D50022366B /* ANSI.swift */; };
 		C96873C11A94CB160022366B /* log.txt in Resources */ = {isa = PBXBuildFile; fileRef = C96873C01A94CB160022366B /* log.txt */; };
 		C9845A6F1A94700C0082154F /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9845A6E1A94700C0082154F /* Colors.swift */; };
+		C9AECF651AB9870D0089DB28 /* ANSITextStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9AECF641AB9870D0089DB28 /* ANSITextStorage.swift */; };
+		C9AECF681AB9900F0089DB28 /* ANSITextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9AECF671AB9900F0089DB28 /* ANSITextView.swift */; };
 		C9E1EFCD1AB595D40097D392 /* Nimble.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9E1EFCB1AB595D40097D392 /* Nimble.framework */; };
 		C9E1EFCE1AB595D40097D392 /* Quick.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9E1EFCC1AB595D40097D392 /* Quick.framework */; };
 /* End PBXBuildFile section */
@@ -39,6 +41,8 @@
 		C96873BC1A9475D50022366B /* ANSI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ANSI.swift; sourceTree = "<group>"; };
 		C96873C01A94CB160022366B /* log.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = log.txt; sourceTree = "<group>"; };
 		C9845A6E1A94700C0082154F /* Colors.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
+		C9AECF641AB9870D0089DB28 /* ANSITextStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ANSITextStorage.swift; sourceTree = "<group>"; };
+		C9AECF671AB9900F0089DB28 /* ANSITextView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ANSITextView.swift; sourceTree = "<group>"; };
 		C9E1EFCB1AB595D40097D392 /* Nimble.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Nimble.framework; path = "../nimble/build/Debug-iphoneos/Nimble.framework"; sourceTree = "<group>"; };
 		C9E1EFCC1AB595D40097D392 /* Quick.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quick.framework; path = ../DerivedData/ANSIKit/Build/Products/Debug/Quick.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -85,6 +89,7 @@
 		C95E4EE91A945F1A0067CAD9 /* ANSIKit */ = {
 			isa = PBXGroup;
 			children = (
+				C9AECF661AB98FF60089DB28 /* TextKit */,
 				C95E4EEC1A945F1A0067CAD9 /* ANSIKit.h */,
 				C95E4EEA1A945F1A0067CAD9 /* Supporting Files */,
 				C95E4F031A9463D70067CAD9 /* SGRCode.swift */,
@@ -128,6 +133,15 @@
 				C96873C01A94CB160022366B /* log.txt */,
 			);
 			name = "ansi formatted";
+			sourceTree = "<group>";
+		};
+		C9AECF661AB98FF60089DB28 /* TextKit */ = {
+			isa = PBXGroup;
+			children = (
+				C9AECF641AB9870D0089DB28 /* ANSITextStorage.swift */,
+				C9AECF671AB9900F0089DB28 /* ANSITextView.swift */,
+			);
+			name = TextKit;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -240,7 +254,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				C96873BD1A9475D50022366B /* ANSI.swift in Sources */,
+				C9AECF651AB9870D0089DB28 /* ANSITextStorage.swift in Sources */,
 				C95E4F041A9463D70067CAD9 /* SGRCode.swift in Sources */,
+				C9AECF681AB9900F0089DB28 /* ANSITextView.swift in Sources */,
 				C9845A6F1A94700C0082154F /* Colors.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
