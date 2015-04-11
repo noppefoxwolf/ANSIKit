@@ -64,7 +64,7 @@ func attributedStringWithANSIEscapedString(helper: AnsiHelper, aString: String) 
   
   var cleanString: String?
   var attributesAndRanges = attributesForString(helper, aString, &cleanString)
-  let foundStuff = countElements(attributesAndRanges)
+  let foundStuff = count(attributesAndRanges)
   var attributedString: NSMutableAttributedString = NSMutableAttributedString(string: cleanString!, attributes: [NSFontAttributeName: helper.font, NSForegroundColorAttributeName: helper.defaultStringColor])
   
   for thisAttributeDict: [String: AnyObject] in attributesAndRanges {
@@ -81,7 +81,7 @@ func attributesForString(helper: AnsiHelper, aString: String, inout aCleanString
     return []
   }
   
-  if (countElements(aString) <= countElements(EscapeCharacters.CSI)) {
+  if (count(aString) <= count(EscapeCharacters.CSI)) {
     if (aCleanString != nil) {
       aCleanString = aString
     }
@@ -92,7 +92,7 @@ func attributesForString(helper: AnsiHelper, aString: String, inout aCleanString
   
   var cleanString: String? = ""
   let formatCodes: [[String: AnyObject]] = escapeCodesForString(aString, &cleanString)
-  let foundCodes = countElements(formatCodes)
+  let foundCodes = count(formatCodes)
   
   for (index, thisCodeDict) in enumerate(formatCodes) {
     var thisCode = thisCodeDict[AttributeKeys.code] as Int
@@ -132,7 +132,7 @@ func rangeOfString(string: String, startCode: [String: AnyObject], codes: [[Stri
     }
   }
   if (formattingRunEndLocation == -1) {
-    formattingRunEndLocation = countElements(string)
+    formattingRunEndLocation = count(string)
   }
 
   let range = NSMakeRange(formattingRunStartLocation, (formattingRunEndLocation-formattingRunStartLocation))
@@ -227,7 +227,7 @@ func escapeCodesForString(escapedString: String, inout cleanString: String?) -> 
     return []
   }
   
-  if (aString.length <= countElements(EscapeCharacters.CSI)) {
+  if (aString.length <= count(EscapeCharacters.CSI)) {
     return []
   }
   
