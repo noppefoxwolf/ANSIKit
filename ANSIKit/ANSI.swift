@@ -93,21 +93,22 @@ func attributesForString(helper: AnsiHelper, aString: String, inout aCleanString
   var cleanString: String? = ""
   let formatCodes: [[String: AnyObject]] = escapeCodesForString(aString, &cleanString)
   let foundCodes = count(formatCodes)
+  var startIndex = 0
+  var range: NSRange
   
   for (index, thisCodeDict) in enumerate(formatCodes) {
-    if let thisCode = thisCodeDict[AttributeKeys.code] as? Int {
-      var code = SGRCode(rawValue: thisCode)
-      if let thisAttributeName = attributeNameForCode(code!) {
-        if let thisAttributeValue: AnyObject = attributeValueForCode(code!, helper) {
-          let startIndex = index + 1
-          let codesSubset: [[String: AnyObject]] = Array(formatCodes[startIndex..<foundCodes])
-          let range = rangeOfString(cleanString!, thisCodeDict, codesSubset)
-          attrsAndRanges.append([
-            AttributeKeys.range: range,
-            AttributeKeys.name: thisAttributeName,
-            AttributeKeys.value: thisAttributeValue
-            ])
-        }
+    var thisCode = thisCodeDict[AttributeKeys.code] as! Int
+    var code = SGRCode(rawValue: thisCode)
+    
+    if let attributeName = attributeNameForCode(code!) {
+      if let attributeValue: AnyObject = attributeValueForCode(code!, helper) {
+        startIndex = index + 1
+        range = rangeOfString(cleanString!, thisCodeDict, Array(formatCodes[startIndex..<foundCodes]))
+        attrsAndRanges.append([
+          AttributeKeys.range: range,
+          AttributeKeys.name: attributeName,
+          AttributeKeys.value: attributeValue
+          ])
       }
     }
   }
@@ -144,11 +145,11 @@ func attributeNameForCode(code: SGRCode) -> String? {
   if codeIsFgColor(code) {
     return NSForegroundColorAttributeName
   } else if codeIsBgColor(code) {
-    return NSBackgroundColorAttributeName;
+    return NSBackgroundColorAttributeName
   } else if codeIsIntensity(code) {
-    return NSFontAttributeName;
+    return NSFontAttributeName
   } else if codeIsUnderline(code) {
-    return NSUnderlineStyleAttributeName;
+    return NSUnderlineStyleAttributeName
   }
   return nil
 }
@@ -239,33 +240,31 @@ func escapeCodesForString(escapedString: String, inout cleanString: String?) -> 
   var coveredLength = 0
   
   var searchRange = NSMakeRange(0, aStringLength)
-  var thisEscapeSequenceRange: NSRange
+  var sequenceRange: NSRange
   var thisCoveredLength: Int = 0
   var searchStart: Int = 0
   
   do
   {
-    thisEscapeSequenceRange = aString.rangeOfString(EscapeCharacters.CSI, options: NSStringCompareOptions.allZeros, range: searchRange)
+    sequenceRange = aString.rangeOfString(EscapeCharacters.CSI, options: NSStringCompareOptions.LiteralSearch, range: searchRange)
     
-    if (thisEscapeSequenceRange.location != NSNotFound) {
-      var codes = [Int]()
-      codes = codesForSequence(&thisEscapeSequenceRange, aString)
+    if (sequenceRange.location != NSNotFound) {
       
-      thisCoveredLength = thisEscapeSequenceRange.location - searchRange.location
+      thisCoveredLength = sequenceRange.location - searchRange.location
       coveredLength += thisCoveredLength
-      
-      for codeToAdd: Int in codes as [Int] {
-        formatCodes.append([AttributeKeys.code: codeToAdd, AttributeKeys.location: coveredLength])
+
+      formatCodes += codesForSequence(&sequenceRange, aString).map { code in
+        [AttributeKeys.code: code, AttributeKeys.location: coveredLength]
       }
       
       if (thisCoveredLength > 0) {
         cleanString = cleanString?.stringByAppendingString(aString.substringWithRange(NSMakeRange(searchRange.location, thisCoveredLength)))
       }
       
-      searchStart = NSMaxRange(thisEscapeSequenceRange)
+      searchStart = NSMaxRange(sequenceRange)
       searchRange = NSMakeRange(searchStart, aStringLength - searchStart)
     }
-  } while(thisEscapeSequenceRange.location != NSNotFound)
+  } while(sequenceRange.location != NSNotFound)
   
   if (searchRange.length > 0) {
     cleanString = cleanString?.stringByAppendingString(aString.substringWithRange(searchRange))
