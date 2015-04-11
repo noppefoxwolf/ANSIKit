@@ -18,7 +18,7 @@ class ANSISpec: QuickSpec {
         var dataResponse: NSData?
         let result:NSString = NSString(contentsOfFile: filePath!, encoding: NSUTF8StringEncoding, error: nil)!
         let helper = AnsiHelper(color: UIColor.whiteColor(), font: UIFont.preferredFontForTextStyle(UIFontTextStyleBody))
-        let attributed = ansiEscapedAttributedString(helper, result)
+        let attributed = ansiEscapedAttributedString(helper, result as String)
         
         expect(attributed).notTo(beNil())
       }

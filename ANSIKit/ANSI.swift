@@ -68,8 +68,8 @@ func attributedStringWithANSIEscapedString(helper: AnsiHelper, aString: String) 
   var attributedString: NSMutableAttributedString = NSMutableAttributedString(string: cleanString!, attributes: [NSFontAttributeName: helper.font, NSForegroundColorAttributeName: helper.defaultStringColor])
   
   for thisAttributeDict: [String: AnyObject] in attributesAndRanges {
-    if let attributeValue: AnyObject = thisAttributeDict[AttributeKeys.value] {
-      attributedString.addAttribute(thisAttributeDict[AttributeKeys.name] as String, value: attributeValue, range: thisAttributeDict[AttributeKeys.range] as NSRange)
+    if let attributeValue: AnyObject = thisAttributeDict[AttributeKeys.value], let attributeName: String = thisAttributeDict[AttributeKeys.name] as? String, let range = thisAttributeDict[AttributeKeys.range] as? NSRange {
+      attributedString.addAttribute(attributeName, value: attributeValue, range: range)
     }
   }
   
@@ -95,19 +95,19 @@ func attributesForString(helper: AnsiHelper, aString: String, inout aCleanString
   let foundCodes = count(formatCodes)
   
   for (index, thisCodeDict) in enumerate(formatCodes) {
-    var thisCode = thisCodeDict[AttributeKeys.code] as Int
-    var code = SGRCode(rawValue: thisCode)
-    
-    if let thisAttributeName = attributeNameForCode(code!) {
-      if let thisAttributeValue: AnyObject = attributeValueForCode(code!, helper) {
-        let startIndex = index + 1
-        let codesSubset: [[String: AnyObject]] = Array(formatCodes[startIndex..<foundCodes])
-        let range = rangeOfString(cleanString!, thisCodeDict, codesSubset)
-        attrsAndRanges.append([
-          AttributeKeys.range: range,
-          AttributeKeys.name: thisAttributeName,
-          AttributeKeys.value: thisAttributeValue
-          ])
+    if let thisCode = thisCodeDict[AttributeKeys.code] as? Int {
+      var code = SGRCode(rawValue: thisCode)
+      if let thisAttributeName = attributeNameForCode(code!) {
+        if let thisAttributeValue: AnyObject = attributeValueForCode(code!, helper) {
+          let startIndex = index + 1
+          let codesSubset: [[String: AnyObject]] = Array(formatCodes[startIndex..<foundCodes])
+          let range = rangeOfString(cleanString!, thisCodeDict, codesSubset)
+          attrsAndRanges.append([
+            AttributeKeys.range: range,
+            AttributeKeys.name: thisAttributeName,
+            AttributeKeys.value: thisAttributeValue
+            ])
+        }
       }
     }
   }
@@ -121,13 +121,13 @@ func attributesForString(helper: AnsiHelper, aString: String, inout aCleanString
 
 func rangeOfString(string: String, startCode: [String: AnyObject], codes: [[String: AnyObject]]) -> NSRange {
   var formattingRunEndLocation = -1
-  var formattingRunStartLocation = startCode[AttributeKeys.location] as Int
-  var formattingRunStartCode = SGRCode(rawValue: startCode[AttributeKeys.code] as Int)
+  var formattingRunStartLocation = startCode[AttributeKeys.location] as! Int
+  var formattingRunStartCode = SGRCode(rawValue: startCode[AttributeKeys.code] as! Int)
 
   for endCode: [String: AnyObject] in codes {
-    var theEndCode = endCode[AttributeKeys.code] as Int
+    var theEndCode = endCode[AttributeKeys.code] as! Int
     if (shouldEndFormattingIntroduced(SGRCode(rawValue: theEndCode)!, formattingRunStartCode!)) {
-      formattingRunEndLocation = endCode[AttributeKeys.location] as Int
+      formattingRunEndLocation = endCode[AttributeKeys.location] as! Int
       break
     }
   }
@@ -160,14 +160,16 @@ func attributeValueForCode(code: SGRCode, helper: AnsiHelper) -> AnyObject? {
     return code.color
   } else if code == SGRCode.IntensityBold {
     traits = traits | .TraitBold
-    let boldDescriptor: UIFontDescriptor = descriptor.fontDescriptorWithSymbolicTraits(traits)
-    let boldFont: UIFont = UIFont(descriptor: boldDescriptor, size: helper.font.pointSize)
-    return boldFont
+    if let boldDescriptor: UIFontDescriptor = descriptor.fontDescriptorWithSymbolicTraits(traits) {
+      let boldFont: UIFont = UIFont(descriptor: boldDescriptor, size: helper.font.pointSize)
+      return boldFont
+    }
   } else if codeIsIntensity(code) {
     traits = traits | .TraitMonoSpace
-    let newDescriptor: UIFontDescriptor = descriptor.fontDescriptorWithSymbolicTraits(traits)
-    let unboldFont = UIFont(descriptor: newDescriptor, size: helper.font.pointSize)
-    return unboldFont
+    if let newDescriptor: UIFontDescriptor = descriptor.fontDescriptorWithSymbolicTraits(traits) {
+      let unboldFont = UIFont(descriptor: newDescriptor, size: helper.font.pointSize)
+      return unboldFont
+    }
   } else if code == SGRCode.UnderlineSingle {
     return NSUnderlineStyle.StyleSingle.rawValue
   } else if code == SGRCode.UnderlineDouble {
@@ -286,7 +288,7 @@ func codesForSequence(inout sequenceRange: NSRange, string: NSString) -> [Int] {
       break
     }
     
-    var c: unichar = string.characterAtIndex(thisIndex)
+    var c: Int = Int(string.characterAtIndex(thisIndex))
     
     if ((48 <= c) && (c <= 57))
     {
