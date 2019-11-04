@@ -15,14 +15,14 @@ public struct Colors {
   static let Alpha: CGFloat = 1.0
 
   struct Fg {
-    static let Black = UIColor.blackColor()
-    static let Red = UIColor.redColor()
-    static let Green = UIColor.greenColor()
-    static let Yellow = UIColor.yellowColor()
-    static let Blue = UIColor.blueColor()
-    static let Magenta = UIColor.magentaColor()
-    static let Cyan = UIColor.cyanColor()
-    static let White = UIColor.whiteColor()
+    static let Black = UIColor.black
+    static let Red = UIColor.red
+    static let Green = UIColor.green
+    static let Yellow = UIColor.yellow
+    static let Blue = UIColor.blue
+    static let Magenta = UIColor.magenta
+    static let Cyan = UIColor.cyan
+    static let White = UIColor.white
     
     static let BrightBlack = UIColor(white: 0.337, alpha: 1.0)
     static let BrightRed = UIColor(hue: 1.0, saturation: Colors.Saturation, brightness: Colors.Brightness, alpha: Colors.Alpha)
@@ -31,17 +31,17 @@ public struct Colors {
     static let BrightBlue = UIColor(hue: 2.0 / 3.0, saturation: Colors.Saturation, brightness: Colors.Brightness, alpha: Colors.Alpha)
     static let BrightMagenta = UIColor(hue: 5.0 / 6.0, saturation: Colors.Saturation, brightness: Colors.Brightness, alpha: Colors.Alpha)
     static let BrightCyan = UIColor(hue: 0.5, saturation: Colors.Saturation, brightness: Colors.Brightness, alpha: Colors.Alpha)
-    static let BrightWhite = UIColor.whiteColor()
+    static let BrightWhite = UIColor.white
   }
   struct Bg {
-    static let Black = UIColor.blackColor()
-    static let Red = UIColor.redColor()
-    static let Green = UIColor.greenColor()
-    static let Yellow = UIColor.yellowColor()
-    static let Blue = UIColor.blueColor()
-    static let Magenta = UIColor.magentaColor()
-    static let Cyan = UIColor.cyanColor()
-    static let White = UIColor.whiteColor()
+    static let Black = UIColor.black
+    static let Red = UIColor.red
+    static let Green = UIColor.green
+    static let Yellow = UIColor.yellow
+    static let Blue = UIColor.blue
+    static let Magenta = UIColor.magenta
+    static let Cyan = UIColor.cyan
+    static let White = UIColor.white
     
     static let BrightBlack = Colors.Fg.BrightBlack
     static let BrightRed = Colors.Fg.BrightRed
@@ -50,7 +50,7 @@ public struct Colors {
     static let BrightBlue = Colors.Fg.BrightBlue
     static let BrightMagenta = Colors.Fg.BrightMagenta
     static let BrightCyan = Colors.Fg.BrightCyan
-    static let BrightWhite = UIColor.whiteColor()
+    static let BrightWhite = UIColor.white
   }
   
 }
