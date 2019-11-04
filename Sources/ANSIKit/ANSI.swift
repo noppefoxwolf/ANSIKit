@@ -41,10 +41,12 @@ public extension NSAttributedString {
 func attributedString(withANSIEscapedString aString: String, options: ANSI.Options) -> NSAttributedString {
     guard !aString.isEmpty else { return .init() }
     
-    
     var cleanString: String?
     let attributesAndRanges = attributes(for: aString, options: options, aCleanString: &cleanString)
-    let attributedString: NSMutableAttributedString = NSMutableAttributedString(string: cleanString!, attributes: [.font: options.font, .foregroundColor: options.foregroundColor])
+    let attributedString: NSMutableAttributedString = .init(string: cleanString!, attributes: [
+        .font: options.font,
+        .foregroundColor: options.foregroundColor
+    ])
     
     for thisAttributeDict: [AttributeKeys: Any] in attributesAndRanges {
         if let attributeValue: Any = thisAttributeDict[AttributeKeys.value],
