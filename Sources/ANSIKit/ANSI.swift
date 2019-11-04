@@ -8,26 +8,19 @@
 
 import UIKit
 
-public struct AnsiHelper {
-    public var defaultStringColor: UIColor
-    public var font: UIFont
+public enum ANSI {
     
-    public init(color: UIColor, font: UIFont) {
-        self.defaultStringColor = color
-        self.font = font
-    }
 }
 
-struct HSB {
-    var hue: CGFloat
-    var saturation: CGFloat
-    var brightness: CGFloat
-    
-    init (hue: CGFloat, saturation: CGFloat, brightness: CGFloat)
-    {
-        self.hue = hue
-        self.saturation = saturation
-        self.brightness = brightness
+public extension ANSI {
+    struct Options {
+        public var foregroundColor: UIColor
+        public var font: UIFont
+        
+        public init(color: UIColor, font: UIFont) {
+            self.foregroundColor = color
+            self.font = font
+        }
     }
 }
 
@@ -39,45 +32,32 @@ enum AttributeKeys: String {
     case location = "location"
 }
 
-func getHSBFromColor(color: UIColor) -> HSB {
-    var hue: CGFloat = 0.0
-    var saturation: CGFloat = 0.0
-    var brightness: CGFloat = 0.0
-    
-    color.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: nil)
-    
-    return HSB(hue: hue, saturation: saturation, brightness: brightness)
-}
-
-
-public func ansiEscapedAttributedString(helper: AnsiHelper, ansi: String) -> NSAttributedString? {
-    let string: NSAttributedString? = attributedStringWithANSIEscapedString(helper: helper, aString: ansi)
-    
-    return string
-}
-
-func attributedStringWithANSIEscapedString(helper: AnsiHelper, aString: String) -> NSAttributedString? {
-    if (aString == "") {
-        return nil
+public extension NSAttributedString {
+    convenience init(ansiString: String, options: ANSI.Options) {
+        self.init(attributedString: attributedString(withANSIEscapedString: ansiString, options: options))
     }
+}
+
+func attributedString(withANSIEscapedString aString: String, options: ANSI.Options) -> NSAttributedString {
+    guard !aString.isEmpty else { return .init() }
     
     
     var cleanString: String?
-    let attributesAndRanges = attributesForString(helper: helper, aString: aString, aCleanString: &cleanString)
-    let attributedString: NSMutableAttributedString = NSMutableAttributedString(string: cleanString!, attributes: [.font: helper.font, .foregroundColor: helper.defaultStringColor])
+    let attributesAndRanges = attributes(for: aString, options: options, aCleanString: &cleanString)
+    let attributedString: NSMutableAttributedString = NSMutableAttributedString(string: cleanString!, attributes: [.font: options.font, .foregroundColor: options.foregroundColor])
     
     for thisAttributeDict: [AttributeKeys: Any] in attributesAndRanges {
         if let attributeValue: Any = thisAttributeDict[AttributeKeys.value],
             let attributeName: NSAttributedString.Key = thisAttributeDict[AttributeKeys.name] as? NSAttributedString.Key,
-           let range = thisAttributeDict[AttributeKeys.range] as? NSRange {
-                attributedString.addAttribute(attributeName, value: attributeValue, range: range)
+            let range = thisAttributeDict[AttributeKeys.range] as? NSRange {
+            attributedString.addAttribute(attributeName, value: attributeValue, range: range)
         }
     }
     
     return attributedString;
 }
 
-func attributesForString(helper: AnsiHelper, aString: String, aCleanString: inout String?) -> [[AttributeKeys: Any]] {
+func attributes(for aString: String, options: ANSI.Options, aCleanString: inout String?) -> [[AttributeKeys: Any]] {
     if (aString == "") {
         return []
     }
@@ -92,7 +72,7 @@ func attributesForString(helper: AnsiHelper, aString: String, aCleanString: inou
     var attrsAndRanges = [[AttributeKeys: Any]]()
     
     var cleanString: String? = ""
-    let formatCodes: [[AttributeKeys: Any]] = escapeCodesForString(escapedString: aString, cleanString: &cleanString)
+    let formatCodes: [[AttributeKeys: Any]] = escapeCodes(for: aString, cleanString: &cleanString)
     let foundCodes = formatCodes.count
     var startIndex = 0
     var range: NSRange
@@ -101,10 +81,10 @@ func attributesForString(helper: AnsiHelper, aString: String, aCleanString: inou
         let thisCode = thisCodeDict[AttributeKeys.code] as! Int
         let code = SGRCode(rawValue: thisCode)
         
-        if let attributeName = attributeNameForCode(code: code!) {
-            if let attributeValue: Any = attributeValueForCode(code: code!, helper: helper) {
+        if let attributeName = attributeName(for: code!) {
+            if let attributeValue: Any = attributeValue(for: code!, options: options) {
                 startIndex = index + 1
-                range = rangeOfString(string: cleanString!, startCode: thisCodeDict, codes: Array(formatCodes[startIndex..<foundCodes]))
+                range = _range(of: cleanString!, startCode: thisCodeDict, codes: Array(formatCodes[startIndex..<foundCodes]))
                 attrsAndRanges.append([
                     AttributeKeys.range: range,
                     AttributeKeys.name: attributeName,
@@ -121,7 +101,7 @@ func attributesForString(helper: AnsiHelper, aString: String, aCleanString: inou
     return attrsAndRanges
 }
 
-func rangeOfString(string: String, startCode: [AttributeKeys: Any], codes: [[AttributeKeys: Any]]) -> NSRange {
+func _range(of string: String, startCode: [AttributeKeys: Any], codes: [[AttributeKeys: Any]]) -> NSRange {
     var formattingRunEndLocation = -1
     let formattingRunStartLocation = startCode[AttributeKeys.location] as! Int
     let formattingRunStartCode = SGRCode(rawValue: startCode[AttributeKeys.code] as! Int)
@@ -142,90 +122,69 @@ func rangeOfString(string: String, startCode: [AttributeKeys: Any], codes: [[Att
     return range
 }
 
-func attributeNameForCode(code: SGRCode) -> NSAttributedString.Key? {
-    if codeIsFgColor(code: code) {
+func attributeName(for code: SGRCode) -> NSAttributedString.Key? {
+    if code.isFgColor {
         return .foregroundColor
-    } else if codeIsBgColor(code: code) {
+    } else if code.isBgColor {
         return .backgroundColor
-    } else if codeIsIntensity(code: code) {
+    } else if code.isIntensity {
         return .font
-    } else if codeIsUnderline(code: code) {
+    } else if code.isUnderline {
         return .underlineStyle
     }
     return nil
 }
 
-func attributeValueForCode(code: SGRCode, helper: AnsiHelper) -> Any? {
-    let descriptor: UIFontDescriptor = helper.font.fontDescriptor
+func attributeValue(for code: SGRCode, options: ANSI.Options) -> Any? {
+    let descriptor: UIFontDescriptor = options.font.fontDescriptor
     var traits: UIFontDescriptor.SymbolicTraits = descriptor.symbolicTraits
-    if codeIsColor(code: code) {
+    if code.isColor {
         return code.color
-    } else if code == SGRCode.IntensityBold {
+    } else if code == SGRCode.intensityBold {
         traits = [traits, .traitBold]
         if let boldDescriptor: UIFontDescriptor = descriptor.withSymbolicTraits(traits) {
-            let boldFont: UIFont = UIFont(descriptor: boldDescriptor, size: helper.font.pointSize)
+            let boldFont: UIFont = UIFont(descriptor: boldDescriptor, size: options.font.pointSize)
             return boldFont
         }
-    } else if codeIsIntensity(code: code) {
+    } else if code.isIntensity {
         traits = [traits, .traitMonoSpace]
         if let newDescriptor: UIFontDescriptor = descriptor.withSymbolicTraits(traits) {
-            let unboldFont = UIFont(descriptor: newDescriptor, size: helper.font.pointSize)
+            let unboldFont = UIFont(descriptor: newDescriptor, size: options.font.pointSize)
             return unboldFont
         }
-    } else if code == SGRCode.UnderlineSingle {
+    } else if code == SGRCode.underlineSingle {
         return NSUnderlineStyle.single
-    } else if code == SGRCode.UnderlineDouble {
+    } else if code == SGRCode.underlineDouble {
         return NSUnderlineStyle.double
-    } else if code == SGRCode.UnderlineNone {
+    } else if code == SGRCode.underlineNone {
         return nil //none
     }
     
     return nil
 }
 
-func codeIsFgColor(code: SGRCode) -> Bool {
-    return (code.rawValue >= SGRCode.FgBlack.rawValue && code.rawValue <= SGRCode.FgWhite.rawValue) ||
-        (code.rawValue >= SGRCode.FgBrightBlack.rawValue && code.rawValue <= SGRCode.FgBrightWhite.rawValue)
-}
-
-func codeIsBgColor(code: SGRCode) -> Bool {
-    return (code.rawValue >= SGRCode.BgBlack.rawValue && code.rawValue <= SGRCode.BgWhite.rawValue) ||
-        (code.rawValue >= SGRCode.BgBrightBlack.rawValue && code.rawValue <= SGRCode.BgBrightWhite.rawValue)
-}
-
-func codeIsIntensity(code: SGRCode) -> Bool {
-    return code.rawValue == SGRCode.IntensityNormal.rawValue || code.rawValue == SGRCode.IntensityBold.rawValue || code.rawValue == SGRCode.IntensityFaint.rawValue
-}
-
-func codeIsUnderline(code: SGRCode) -> Bool {
-    return code.rawValue == SGRCode.UnderlineNone.rawValue || code.rawValue == SGRCode.UnderlineSingle.rawValue || code.rawValue == SGRCode.UnderlineDouble.rawValue
-}
-
-func codeIsColor(code: SGRCode) -> Bool {
-    return codeIsFgColor(code: code) || codeIsBgColor(code: code)
-}
 
 func shouldEndFormattingIntroduced(endCode: SGRCode, startCode: SGRCode) -> Bool {
-    if codeIsFgColor(code: startCode) {
-        return endCode.rawValue == SGRCode.AllReset.rawValue ||
-            (endCode.rawValue >= SGRCode.FgBlack.rawValue && endCode.rawValue <= SGRCode.FgReset.rawValue) ||
-            (endCode.rawValue >= SGRCode.FgBrightBlack.rawValue && endCode.rawValue <= SGRCode.FgBrightWhite.rawValue)
-    } else if codeIsBgColor(code: startCode) {
-        return endCode.rawValue == SGRCode.AllReset.rawValue ||
-            (endCode.rawValue >= SGRCode.BgBlack.rawValue && endCode.rawValue <= SGRCode.BgReset.rawValue) ||
-            (endCode.rawValue >= SGRCode.BgBrightBlack.rawValue && endCode.rawValue <= SGRCode.BgBrightWhite.rawValue)
-    } else if codeIsIntensity(code: startCode) {
-        return (endCode.rawValue == SGRCode.AllReset.rawValue || endCode.rawValue == SGRCode.IntensityNormal.rawValue ||
-            endCode.rawValue == SGRCode.IntensityBold.rawValue || endCode.rawValue == SGRCode.IntensityFaint.rawValue);
-    } else if codeIsUnderline(code: startCode) {
-        return (endCode.rawValue == SGRCode.AllReset.rawValue || endCode.rawValue == SGRCode.UnderlineNone.rawValue ||
-            endCode.rawValue == SGRCode.UnderlineSingle.rawValue || endCode.rawValue == SGRCode.UnderlineDouble.rawValue);
+    if startCode.isFgColor {
+        return endCode.rawValue == SGRCode.allReset.rawValue ||
+            (endCode.rawValue >= SGRCode.fgBlack.rawValue && endCode.rawValue <= SGRCode.fgReset.rawValue) ||
+            (endCode.rawValue >= SGRCode.fgBrightBlack.rawValue && endCode.rawValue <= SGRCode.fgBrightWhite.rawValue)
+    } else if startCode.isBgColor {
+        return endCode.rawValue == SGRCode.allReset.rawValue ||
+            (endCode.rawValue >= SGRCode.bgBlack.rawValue && endCode.rawValue <= SGRCode.bgReset.rawValue) ||
+            (endCode.rawValue >= SGRCode.bgBrightBlack.rawValue && endCode.rawValue <= SGRCode.bgBrightWhite.rawValue)
+    } else if startCode.isIntensity {
+        return (endCode.rawValue == SGRCode.allReset.rawValue || endCode.rawValue == SGRCode.intensityNormal.rawValue ||
+            endCode.rawValue == SGRCode.intensityBold.rawValue || endCode.rawValue == SGRCode.intensityFaint.rawValue);
+    } else if startCode.isUnderline {
+        return (endCode.rawValue == SGRCode.allReset.rawValue || endCode.rawValue == SGRCode.underlineNone.rawValue ||
+            endCode.rawValue == SGRCode.underlineSingle.rawValue || endCode.rawValue == SGRCode.underlineDouble.rawValue);
     }
     
     return false
 }
 
-func escapeCodesForString(escapedString: String, cleanString: inout String?) -> [[AttributeKeys: Any]] {
+func escapeCodes(for escapedString: String, cleanString: inout String?) -> [[AttributeKeys: Any]] {
     let aString = escapedString as NSString
     if (aString == "") {
         return []
@@ -245,8 +204,7 @@ func escapeCodesForString(escapedString: String, cleanString: inout String?) -> 
     var thisCoveredLength: Int = 0
     var searchStart: Int = 0
     
-    repeat
-    {
+    repeat {
         sequenceRange = aString.range(of: EscapeCharacters.CSI, options: NSString.CompareOptions.literal, range: searchRange)
         
         if (sequenceRange.location != NSNotFound) {
@@ -254,7 +212,7 @@ func escapeCodesForString(escapedString: String, cleanString: inout String?) -> 
             thisCoveredLength = sequenceRange.location - searchRange.location
             coveredLength += thisCoveredLength
             
-            formatCodes += codesForSequence(sequenceRange: &sequenceRange, string: aString).map { code in
+            formatCodes += codes(for: &sequenceRange, string: aString).map { code in
                 [AttributeKeys.code: code, AttributeKeys.location: coveredLength]
             }
             
@@ -274,14 +232,13 @@ func escapeCodesForString(escapedString: String, cleanString: inout String?) -> 
     return formatCodes
 }
 
-func codesForSequence( sequenceRange: inout NSRange, string: NSString) -> [Int] {
+func codes(for sequenceRange: inout NSRange, string: NSString) -> [Int] {
     var codes = [Int]()
     var code = 0
     var lengthAddition = 1
     var thisIndex: Int
     
-    while(true)
-    {
+    while (true) {
         thisIndex = (NSMaxRange(sequenceRange) + lengthAddition - 1)
         
         if (thisIndex >= string.length) {
