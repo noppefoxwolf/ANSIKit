@@ -62,8 +62,8 @@ public enum SGRCode: Int {
 }
 
 public struct EscapeCharacters {
-  static let CSI: String = "["
-  static let SGREnd = "m"
+  static let csi: String = "["
+  static let sgrEnd = "m"
 }
 
 protocol Color {

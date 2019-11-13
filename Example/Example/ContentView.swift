@@ -27,24 +27,40 @@ struct ContentView_Previews: PreviewProvider {
 
 import UIKit
 
-struct ANSIText: UIViewRepresentable {
+struct ANSIText: UIViewOptimizedRepresentable {
     typealias UIViewType = UITextView
-    
-    let text: String
-    
-    init(_ text: String) {
-        self.text = text
+    let value: String
+    init(_ value: Value) {
+        self.value = value
     }
     
     func makeUIView(context: UIViewRepresentableContext<ANSIText>) -> ANSIText.UIViewType {
         return .init()
     }
     
-    func updateUIView(_ uiView: ANSIText.UIViewType, context: UIViewRepresentableContext<ANSIText>) {
-        let options = ANSI.Options(color: UIColor.white, font: UIFont.preferredFont(forTextStyle: .caption1))
-        let attributed = NSAttributedString(ansiString: text, options: options)
+    func shouldUpdateUIView(_ uiView: UITextView, context: UIViewRepresentableContext<ANSIText>) {
+        let font = UIFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+        let options = ANSI.Options(color: UIColor.white, font: font)
+        let attributed = NSAttributedString(ansiString: value, options: options)
         uiView.isEditable = false
         uiView.attributedText = attributed
         uiView.backgroundColor = .black
     }
 }
+
+public protocol UIViewOptimizedRepresentable: UIViewRepresentable {
+    associatedtype Value: Hashable
+    var value: Value { get }
+    init(_ value: Value)
+    func shouldUpdateUIView(_ uiView: Self.UIViewType, context: Self.Context)
+}
+
+public extension UIViewOptimizedRepresentable {
+    func updateUIView(_ uiView: Self.UIViewType, context: Self.Context) {
+        guard uiView.tag != self.value.hashValue else { return }
+        shouldUpdateUIView(uiView, context: context)
+        uiView.tag = self.value.hashValue
+    }
+}
+
+
